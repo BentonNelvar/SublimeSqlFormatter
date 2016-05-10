@@ -1,15 +1,27 @@
 import sublime, sublime_plugin  
   
 class FormatSqlCommand(sublime_plugin.TextCommand):
-    def run(self, edit):
-        view = self.view
-        index = 0
-        while( index < view.size() ):
-            region , word = getWord( view , index )
-            view.replace( edit , region , word.upper() )
-            index = region.b + 1
+    index = 0
 
-def getWord( view , index ):
-    region = view.word( index )
-    word = view.substr( region )
-    return ( region , word )
+    def getNextWord( self ):
+        if FormatSqlCommand.index < self.view.size():
+            region , word = self.getWord( FormatSqlCommand.index )
+            FormatSqlCommand.index = region.b + 1
+            return region , word
+        else:
+            return None , None
+
+    def getWord( self , index ):
+        region = self.view.word( index )
+        word = self.view.substr( region )
+        return ( region , word )
+    
+    def run(self, edit):
+        FormatSqlCommand.index = 0
+        while True:
+            region , word = self.getNextWord()
+            if word == None or region == None:
+                break
+            else:
+                self.view.replace( edit , region , word.upper() )
+
