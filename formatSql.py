@@ -1,27 +1,56 @@
-import sublime, sublime_plugin  
-  
-class FormatSqlCommand(sublime_plugin.TextCommand):
-    index = 0
+from ply import *
+import FormatSqlLexer
+from FormatSqlLexer import tokens
 
-    def getNextWord( self ):
-        if FormatSqlCommand.index < self.view.size():
-            region , word = self.getWord( FormatSqlCommand.index )
-            FormatSqlCommand.index = region.b + 1
-            return region , word
-        else:
-            return None , None
+# import FormatSqlLexer
+# from FormatSqlLexer import tokens
 
-    def getWord( self , index ):
-        region = self.view.word( index )
-        word = self.view.substr( region )
-        return ( region , word )
-    
-    def run(self, edit):
-        FormatSqlCommand.index = 0
-        while True:
-            region , word = self.getNextWord()
-            if word == None or region == None:
-                break
-            else:
-                self.view.replace( edit , region , word.upper() )
+lexer = lex.lex(module=FormatSqlLexer)
 
+# precedence = (
+#     ('left','PLUS','MINUS'),
+#     ('left','TIMES','DIVIDE'),
+#     ('right','UMINUS'),
+#     )
+
+def p_input(p):
+    '''input : statement_list'''
+    p[0] = p[1]
+
+def p_statement_list(p):
+    'statement_list : statement'
+    p[0] = p[1]
+
+def p_statement_select(p):
+    "statement : SELECT select_list FROM table_reference ';'"
+    p[0] = 'SELECT\t\t' + p[2] + '\n\tFROM\t' + p[4] + ';'
+
+def p_select_list(p):
+    "select_list : '*'"
+    p[0] = p[1] 
+
+def p_table_reference(p):
+    'table_reference : TEXT'
+    p[0] = p[1]
+
+def p_error(p):
+    if p:
+        print( 'On line ' + str(p.lineno) + ': Invalid token ' + p.value )
+
+# def p_select_expr(t):
+#     '''select_expr : NAME
+#                    | NAME ALIAS
+#                    | NAME AS ALIAS'''
+
+# def p_table_reference(t):
+#     '''table_reference : NAME
+#                        | NAME ALIAS
+#                        | NAME AS ALIAS'''
+
+
+parser = yacc.yacc()
+
+class FormatSql(object):
+
+    def format( self , input ):
+        return parser.parse( input )
