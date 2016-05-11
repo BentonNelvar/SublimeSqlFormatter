@@ -2,14 +2,17 @@ import sublime
 import sublime_plugin
 from FormatSql import FormatSql
   
-class FormatSqlCommand(sublime_plugin.TextCommand):
+class FormatSqlCommand( sublime_plugin.TextCommand ):
     
-    def run(self, edit):
+    def run( self , edit ):
         formatSql = FormatSql()
-        input = self.view.substr(sublime.Region(0, self.view.size()))
+        regionAll = sublime.Region( 0 , self.view.size() )
+        print( self.view.settings().get('syntax') )
+        input = self.view.substr( regionAll )
         if not input:
             print( 'No text to parse' )
         else:
             output = formatSql.format( input )
-            print(output)
+            self.view.replace( edit , regionAll , output )
+            self.view.set_syntax_file( 'Packages/SQL/SQL.tmLanguage' )
 
